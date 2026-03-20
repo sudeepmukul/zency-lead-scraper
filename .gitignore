@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv-1/
+
+# Node
+node_modules/
+
+# Env files
+.env
+
+# CSV / Data files (IMPORTANT)
+*.csv
+dataset_*.json
+
+# OS junk
+.DS_Store
+Thumbs.db

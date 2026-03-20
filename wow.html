@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LeadGen Pro — Zency Studios</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#07090f;--bg2:#0d1117;--bg3:#131924;--bg4:#1a2235;--border:#1e2d44;--border2:#2a3f5f;--text:#e8edf5;--text2:#8899b0;--text3:#4a5f78;--cyan:#00d4ff;--cyan2:#00a8cc;--hot:#ff3d5a;--warm:#ff8c42;--cool:#3b82f6;--cold:#64748b;--green:#22c55e;--purple:#a78bfa;--yellow:#fbbf24;}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;overflow:hidden}
+#upload-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;background:var(--bg);background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,212,255,.08),transparent),radial-gradient(ellipse 60% 40% at 80% 80%,rgba(255,61,90,.05),transparent);}
+.logo-hdr{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;letter-spacing:6px;color:var(--text3);text-transform:uppercase;margin-bottom:56px;display:flex;align-items:center;gap:12px;}
+.logo-hdr em{color:var(--cyan);font-style:normal;font-size:18px}
+.upload-box{width:540px;border:1px solid var(--border2);border-radius:16px;background:var(--bg2);padding:52px 40px;text-align:center;cursor:pointer;transition:border-color .3s,box-shadow .3s;}
+.upload-box:hover,.upload-box.drag-over{border-color:var(--cyan);box-shadow:0 0 20px rgba(0,212,255,.18);}
+.upload-icon{font-size:52px;margin-bottom:20px;color:var(--text3);display:block;}
+.upload-box:hover .upload-icon{color:var(--cyan)}
+.upload-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:8px;}
+.upload-sub{font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:28px}
+.upload-btn{background:linear-gradient(135deg,var(--cyan),var(--cyan2));color:#000;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;padding:12px 28px;border-radius:8px;border:none;cursor:pointer;display:inline-block;}
+.file-types{display:flex;gap:10px;justify-content:center;margin-top:24px;}
+.ftb{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:11px;color:var(--text2);}
+#file-input{display:none}
+#app{display:none;height:100vh;flex-direction:column}
+#app.active{display:flex}
+.topbar{height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:20px;flex-shrink:0;z-index:50;}
+.topbar-logo{font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;}
+.topbar-logo::before{content:'◈ '}
+.topbar-file{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
+.topbar-stats{display:flex;gap:14px;margin-left:auto;align-items:center;}
+.sc{display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 12px;font-size:11px;}
+.sc .n{font-weight:600;font-size:13px;}
+.ncyan{color:var(--cyan)}.nhot{color:var(--hot)}.nwarm{color:var(--warm)}
+.nfb{background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all .2s;margin-left:8px;}
+.nfb:hover{border-color:var(--cyan);color:var(--cyan)}
+.tabs{display:flex;padding:0 24px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;}
+.tab{font-size:12px;font-weight:500;padding:12px 20px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:all .2s;letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.tab:hover{color:var(--text)}.tab.active{border-bottom-color:var(--cyan);color:var(--cyan)}
+.tc{background:var(--bg3);border-radius:4px;padding:1px 6px;font-size:10px;}
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.tp{display:none;flex:1;overflow:hidden;flex-direction:column}
+.tp.active{display:flex}
+.dash{padding:24px;overflow-y:auto;flex:1;}
+.dash::-webkit-scrollbar{width:5px}.dash::-webkit-scrollbar-track{background:var(--bg)}.dash::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.dg4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden;}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;}
+.kpi.kc::after{background:linear-gradient(90deg,var(--cyan),transparent)}.kpi.kh::after{background:linear-gradient(90deg,var(--hot),transparent)}.kpi.kw::after{background:linear-gradient(90deg,var(--warm),transparent)}.kpi.kg::after{background:linear-gradient(90deg,var(--green),transparent)}
+.kpi-lbl{font-size:10px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px;}
+.kpi-num{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1;margin-bottom:4px;}
+.kpi.kc .kpi-num{color:var(--cyan)}.kpi.kh .kpi-num{color:var(--hot)}.kpi.kw .kpi-num{color:var(--warm)}.kpi.kg .kpi-num{color:var(--green)}
+.kpi-sub{font-size:11px;color:var(--text3)}
+.cg3{display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:16px;margin-bottom:24px;}
+.cc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.ct{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);margin-bottom:16px;}
+.ct::before{content:'▸ ';color:var(--cyan)}
+.cw{position:relative;height:180px}
+.ig3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.ic{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.it{font-size:11px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:16px;}
+.it::before{content:'◈ ';color:var(--cyan)}
+.ir{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.ir:last-child{border-bottom:none}.ir .lbl{color:var(--text2)}.ir .val{font-weight:600;color:var(--text)}
+.pb{height:4px;background:var(--bg4);border-radius:2px;margin-top:4px;overflow:hidden;}
+.pf{height:100%;border-radius:2px;}
+.ni{margin-bottom:10px;}
+.nl{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:4px;}
+.pm{text-align:center;padding:6px 0}
+.pm-n{font-family:'Syne',sans-serif;font-size:48px;font-weight:800;line-height:1;}
+.pm-s{font-size:11px;color:var(--text2);margin-top:4px;}
+.pm-bw{margin:12px 0 8px;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden;}
+.pm-bf{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--hot),var(--warm),var(--green));transition:width 1.2s ease;}
+.pm-h{font-size:10px;color:var(--text3);line-height:1.6}
+.lt{padding:12px 20px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-shrink:0;flex-wrap:wrap;}
+.sb{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 11px;border-radius:7px;outline:none;transition:border-color .2s;width:200px;}
+.sb:focus{border-color:var(--cyan)}
+.fb{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;border-radius:7px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.fb:hover,.fb.act{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.06)}
+.fb.fh.act{border-color:var(--hot);color:var(--hot);background:rgba(255,61,90,.06)}
+.fb.fw.act{border-color:var(--warm);color:var(--warm);background:rgba(255,140,66,.06)}
+.fb.fc.act{border-color:var(--cool);color:var(--cool);background:rgba(59,130,246,.06)}
+.ss{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 10px;border-radius:7px;cursor:pointer;outline:none;}
+.lcl{font-size:11px;color:var(--text3);margin-left:auto;}
+.ls{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:7px;}
+.ls::-webkit-scrollbar{width:5px}.ls::-webkit-scrollbar-track{background:var(--bg)}.ls::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+/* CARD */
+.lc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .2s;flex-shrink:0;}
+.lc:hover{border-color:var(--border2);}
+.lc.gh{border-left:3px solid var(--hot)}.lc.gw{border-left:3px solid var(--warm)}.lc.gc{border-left:3px solid var(--cool)}.lc.gd{border-left:3px solid var(--cold)}
+.lr{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;min-height:54px;flex-wrap:nowrap;}
+.ln{font-size:10px;color:var(--text3);width:22px;text-align:right;flex-shrink:0;}
+.li{flex:1;min-width:0;overflow:hidden;}
+.li-n{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px;}
+.li-s{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lct{display:flex;flex-direction:column;gap:1px;align-items:flex-end;flex-shrink:0;max-width:180px;}
+.lct-p{font-size:11px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.lct-e{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;}
+.lct-e.has-e{color:var(--cyan)}.lct-e.no-e{color:var(--text3);}
+.lic{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.si{width:23px;height:23px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;border:1px solid var(--border);background:var(--bg3);text-decoration:none;cursor:pointer;transition:all .15s;color:var(--text2);}
+.si:hover{border-color:var(--cyan);color:var(--cyan)}.si.on{border-color:var(--border2);}.si.off{opacity:.2;pointer-events:none;}
+.lsb{width:48px;height:42px;border-radius:7px;border:1px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.lsb.sh{border-color:rgba(255,61,90,.4);background:rgba(255,61,90,.08);color:var(--hot)}.lsb.sw{border-color:rgba(255,140,66,.4);background:rgba(255,140,66,.08);color:var(--warm)}.lsb.sc{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08);color:var(--cool)}.lsb.sd{border-color:rgba(100,116,139,.3);background:rgba(100,116,139,.05);color:var(--cold)}
+.lsb .sn{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;line-height:1;}.lsb .sg{font-size:7px;font-weight:700;letter-spacing:.5px;}
+.la{display:flex;gap:4px;align-items:center;flex-shrink:0;}
+.ab{width:27px;height:27px;border-radius:5px;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;font-size:12px;color:var(--text2);text-decoration:none;position:relative;}
+.ab:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,.06)}.ab.ml:hover{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,.06)}
+.tt{position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:#000;color:var(--text);font-size:9px;padding:3px 7px;border-radius:3px;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;border:1px solid var(--border2);font-family:'JetBrains Mono',monospace;z-index:10;}
+.ab:hover .tt{opacity:1}
+.xb{width:21px;height:21px;border-radius:4px;border:1px solid var(--border);background:none;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text3);transition:all .2s;font-size:9px;}
+.xb:hover{color:var(--text);border-color:var(--border2)}.xb.open{transform:rotate(180deg)}
+.ld{display:none;padding:0 14px 12px;border-top:1px solid var(--border);}
+.ld.open{display:block}
+.sr{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0 7px;}
+.stag{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--cyan);}
+.stag.ok{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.2);color:var(--green)}
+.dg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:9px;}
+.df{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;}
+.dfl{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:3px;}
+.dfv{font-size:11px;color:var(--text);word-break:break-all;line-height:1.4;}
+.dfv.nv{color:var(--text3);font-style:italic;}.dfv.lv{color:var(--cyan);cursor:pointer;display:flex;align-items:center;gap:4px;}.dfv.lv:hover{text-decoration:underline;}
+.ci{cursor:pointer;color:var(--text3);font-size:10px;flex-shrink:0;}.ci:hover{color:var(--cyan)}
+.bb{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:9px;}
+.bbl{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;}
+.bbt{font-size:10px;color:var(--text2);line-height:1.9;}
+.das{display:flex;gap:6px;flex-wrap:wrap;}
+.da{background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:'JetBrains Mono',monospace;font-size:11px;padding:5px 11px;border-radius:6px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:5px;text-decoration:none;}
+.da:hover{border-color:var(--cyan);color:var(--cyan)}.da.pr{border-color:var(--purple);color:var(--purple);background:rgba(167,139,250,.06);}
+.da.pr:hover{background:rgba(167,139,250,.12)}
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;}
+.mo.open{display:flex}
+.md{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;width:620px;max-width:95vw;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);}
+.mh{padding:17px 21px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.mt{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.mc{width:25px;height:25px;border-radius:5px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;}
+.mc:hover{border-color:var(--hot);color:var(--hot)}
+.mb{padding:21px;overflow-y:auto;flex:1;}.mb::-webkit-scrollbar{width:4px}.mb::-webkit-scrollbar-thumb{background:var(--border2)}
+.mbi{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px 12px;margin-bottom:13px;display:flex;align-items:center;gap:10px;}
+.mbn{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;margin-bottom:2px;}
+.mbs{font-size:10px;color:var(--text2);}
+.mbsc{margin-left:auto;text-align:center;}
+.mbsn{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;line-height:1;}
+.mbsl{font-size:9px;color:var(--text3);}
+.tl{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;color:var(--text2);margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+.tl strong{color:var(--text);}
+.eta{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.8;padding:13px;border-radius:7px;resize:vertical;min-height:290px;outline:none;transition:border-color .2s;}
+.eta:focus{border-color:var(--cyan)}
+.mf{padding:13px 21px;border-top:1px solid var(--border);display:flex;gap:9px;}
+.cpb{flex:1;background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:.5px;padding:10px 17px;border-radius:7px;border:none;cursor:pointer;}
+.cpb:hover{opacity:.88}.cpb.done{background:linear-gradient(135deg,var(--green),#16a34a)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg2);border:1px solid var(--green);color:var(--green);font-size:12px;padding:8px 15px;border-radius:7px;z-index:300;transform:translateY(48px);opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1}
+.empty-lbl{padding:40px;text-align:center;color:var(--text3);font-size:13px;}
+</style>
+</head>
+<body>
+<div id="upload-screen">
+  <div class="logo-hdr"><em>◈</em> LEADGEN PRO &middot; ZENCY STUDIOS</div>
+  <div class="upload-box" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <span class="upload-icon">&#x27C1;</span>
+    <div class="upload-title">Drop your leads file here</div>
+    <div class="upload-sub">Import any CSV or Excel file from LeadGen Pro.<br>All data stays 100% local &mdash; nothing leaves your device.</div>
+    <div class="upload-btn">SELECT FILE</div>
+    <div class="file-types"><span class="ftb">CSV</span><span class="ftb">XLSX</span><span class="ftb">XLS</span></div>
+  </div>
+  <input type="file" id="file-input" accept=".csv,.xlsx,.xls">
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-logo">LeadGen Pro</div>
+    <div class="topbar-file" id="filename-label">&mdash;</div>
+    <div class="topbar-stats">
+      <div class="sc">Total <span class="n ncyan" id="stat-total">0</span></div>
+      <div class="sc">&#x1F525; <span class="n nhot" id="stat-hot">0</span></div>
+      <div class="sc">&#x26A1; <span class="n nwarm" id="stat-warm">0</span></div>
+    </div>
+    <button class="nfb" onclick="resetApp()">&#x27F3; New File</button>
+  </div>
+  <div class="tabs">
+    <div class="tab active" data-tab="dash">&#x1F4CA; Dashboard</div>
+    <div class="tab" data-tab="leads">&#x26A1; Leads <span class="tc" id="leads-tc">0</span></div>
+  </div>
+  <div class="content">
+    <div class="tp active" id="tab-dash">
+      <div class="dash">
+        <div class="dg4">
+          <div class="kpi kc"><div class="kpi-lbl">Total Leads</div><div class="kpi-num" id="kpi-total">0</div><div class="kpi-sub">businesses scraped</div></div>
+          <div class="kpi kh"><div class="kpi-lbl">&#x1F525; HOT Leads</div><div class="kpi-num" id="kpi-hot">0</div><div class="kpi-sub">score &ge; 72 &middot; pitch today</div></div>
+          <div class="kpi kw"><div class="kpi-lbl">&#x26A1; Contactable</div><div class="kpi-num" id="kpi-contact">0</div><div class="kpi-sub">have email or phone</div></div>
+          <div class="kpi kg"><div class="kpi-lbl">Avg Lead Score</div><div class="kpi-num" id="kpi-avg">0</div><div class="kpi-sub">out of 100</div></div>
+        </div>
+        <div class="cg3">
+          <div class="cc"><div class="ct">Lead Grade Breakdown</div><div class="cw"><canvas id="chart-grades"></canvas></div></div>
+          <div class="cc"><div class="ct">Business Size Distribution</div><div class="cw"><canvas id="chart-size"></canvas></div></div>
+          <div class="cc"><div class="ct">Score Distribution</div><div class="cw"><canvas id="chart-scores"></canvas></div></div>
+        </div>
+        <div class="ig3">
+          <div class="ic"><div class="it">Digital Presence Gaps</div><div id="presence-rows"></div></div>
+          <div class="ic"><div class="it">Top Opportunity Signals</div><div id="signals-rows"></div></div>
+          <div class="ic"><div class="it">Niche Conversion Probability</div>
+            <div class="pm"><div class="pm-n" id="prob-pct">&mdash;</div><div class="pm-s" id="prob-label">calculating...</div><div class="pm-bw"><div class="pm-bf" id="prob-bar" style="width:0%"></div></div><div class="pm-h" id="prob-hint"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="tp" id="tab-leads">
+      <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+        <div class="lt">
+          <input class="sb" id="search-in" type="text" placeholder="Search name, email, address...">
+          <button class="fb act" data-grade="ALL">All</button>
+          <button class="fb fh" data-grade="HOT">&#x1F525; HOT</button>
+          <button class="fb fw" data-grade="WARM">&#x26A1; WARM</button>
+          <button class="fb fc" data-grade="COOL">&#x1F321;&#xFE0F; COOL</button>
+          <button class="fb" data-grade="COLD">&#x2744;&#xFE0F; COLD</button>
+          <select class="ss" id="sort-sel">
+            <option value="score-desc">&#x2193; Score High&#x2192;Low</option>
+            <option value="score-asc">&#x2191; Score Low&#x2192;High</option>
+            <option value="name-asc">A&#x2192;Z Name</option>
+            <option value="rating-desc">&#x2193; Rating</option>
+            <option value="reviews-desc">&#x2193; Reviews</option>
+          </select>
+          <div class="lcl" id="lcl"></div>
+        </div>
+        <div class="ls" id="leads-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="email-modal">
+  <div class="md">
+    <div class="mh"><div class="mt">&#x2709; Outreach Email</div><button class="mc" onclick="closeModal()">&#x2715;</button></div>
+    <div class="mb">
+      <div class="mbi" id="m-biz"></div>
+      <div class="tl"><strong>To:</strong> <span id="m-to">&mdash;</span></div>
+      <textarea class="eta" id="m-body" spellcheck="false"></textarea>
+    </div>
+    <div class="mf"><button class="cpb" id="m-copy" onclick="copyEmail()">&#x1F4CB; Copy Email to Clipboard</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var ALL=[], FIL=[], GF='ALL', CHARTS={};
+var NILSET=new Set(['nil','null','none','','undefined','n/a','na','-']);
+function isNil(v){if(v===null||v===undefined)return true;return NILSET.has(String(v).trim().toLowerCase());}
+function cl(v){return String(v==null?'':v).trim();}
+
+// FILE
+var dz=document.getElementById('drop-zone'), fi=document.getElementById('file-input');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over');});
+dz.addEventListener('drop',function(e){e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+fi.addEventListener('change',function(e){if(e.target.files[0])handleFile(e.target.files[0]);});
+
+function handleFile(f){
+  var ext=f.name.split('.').pop().toLowerCase();
+  document.getElementById('filename-label').textContent=f.name;
+  var r=new FileReader();
+  if(ext==='csv'){r.onload=function(e){loadLeads(parseCSV(e.target.result));};r.readAsText(f,'utf-8');}
+  else{r.onload=function(e){var wb=XLSX.read(e.target.result,{type:'array'});var ws=wb.Sheets[wb.SheetNames[0]];loadLeads(XLSX.utils.sheet_to_json(ws,{defval:''}));};r.readAsArrayBuffer(f);}
+}
+
+// RFC-4180 CSV PARSER
+function parseCSV(raw){
+  if(raw.charCodeAt(0)===0xFEFF)raw=raw.slice(1);
+  raw=raw.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  var records=[],pos=0,len=raw.length;
+  function readField(){
+    if(pos>=len)return'';
+    if(raw[pos]==='"'){
+      pos++;var val='';
+      while(pos<len){
+        if(raw[pos]==='"'){if(raw[pos+1]==='"'){val+='"';pos+=2;}else{pos++;break;}}
+        else{val+=raw[pos++];}
+      }
+      if(pos<len&&raw[pos]===',')pos++;
+      return val.trim();
+    }else{
+      var val='';
+      while(pos<len&&raw[pos]!==','&&raw[pos]!=='\n'){val+=raw[pos++];}
+      if(pos<len&&raw[pos]===',')pos++;
+      return val.trim();
+    }
+  }
+  function readRecord(){
+    while(pos<len&&raw[pos]==='\n')pos++;
+    if(pos>=len)return null;
+    var fields=[];
+    while(pos<len&&raw[pos]!=='\n'){
+      fields.push(readField());
+      if(pos<len&&raw[pos]==='\n'){pos++;break;}
+    }
+    return fields.length?fields:null;
+  }
+  var hdrs=readRecord();
+  if(!hdrs||!hdrs.length)return[];
+  while(pos<len){
+    var rec=readRecord();
+    if(!rec)break;
+    if(rec.length===1&&!rec[0])continue;
+    var obj={};
+    hdrs.forEach(function(h,i){obj[h]=rec[i]!==undefined?rec[i]:'';});
+    records.push(obj);
+  }
+  return records;
+}
+
+// FIELD MAP
+var FMAP={
+  title:['title','business name','name','business_name'],
+  category:['category','type','business_type'],
+  rating:['rating','stars'],
+  reviews_count:['reviews_count','reviews','review count','reviews count','total_reviews'],
+  business_size:['business_size','size','business size'],
+  address:['address','location','full_address'],
+  phone:['phone','phone number','phone (google maps)','phone_number','telephone'],
+  website:['website','url','website url','website_url','site'],
+  email:['email','primary email','primary_email','email address'],
+  all_emails:['all_emails','all emails','emails','all email'],
+  instagram:['instagram','ig'],
+  facebook:['facebook','fb'],
+  twitter:['twitter','twitter / x','x_url'],
+  linkedin:['linkedin'],
+  youtube:['youtube'],
+  website_phone:['website_phone','website phone'],
+  lead_score:['lead_score','score','lead score'],
+  lead_grade:['lead_grade','grade','lead grade'],
+  opportunity_signals:['opportunity_signals','signals','opportunity signals'],
+  maps_url:['maps_url','maps url','google_maps_url'],
+  score_breakdown:['score_breakdown','breakdown','score breakdown'],
+  hours:['hours','opening hours','business_hours']
+};
+
+function norm(raw){
+  var lower={};
+  Object.keys(raw).forEach(function(k){lower[k.toLowerCase().trim()]=cl(raw[k]);});
+  var out={};
+  Object.keys(FMAP).forEach(function(field){
+    var aliases=FMAP[field];
+    for(var i=0;i<aliases.length;i++){
+      if(lower[aliases[i]]!==undefined){out[field]=lower[aliases[i]];break;}
+    }
+    if(!out[field])out[field]='';
+  });
+  return out;
+}
+
+function loadLeads(rows){
+  ALL=rows.map(norm).filter(function(r){return r.title;});
+  if(!ALL.length){alert('No valid leads found. Make sure file has a "title" column.');return;}
+  document.getElementById('upload-screen').style.display='none';
+  document.getElementById('app').classList.add('active');
+  FIL=ALL.slice();
+  updateStats();
+  buildDash();
+  renderLeads();
+}
+
+function updateStats(){
+  var tot=ALL.length,hot=0,warm=0;
+  ALL.forEach(function(l){var g=grade(l.lead_grade);if(g==='hot')hot++;else if(g==='warm')warm++;});
+  document.getElementById('stat-total').textContent=tot;
+  document.getElementById('stat-hot').textContent=hot;
+  document.getElementById('stat-warm').textContent=warm;
+  document.getElementById('leads-tc').textContent=tot;
+}
+
+function resetApp(){
+  ALL=[];FIL=[];
+  document.getElementById('upload-screen').style.display='flex';
+  document.getElementById('app').classList.remove('active');
+  fi.value='';
+  Object.values(CHARTS).forEach(function(c){try{c.destroy();}catch(e){}});
+  CHARTS={};
+}
+
+// TABS
+document.querySelectorAll('.tab').forEach(function(t){
+  t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(function(x){x.classList.remove('active');});
+    document.querySelectorAll('.tp').forEach(function(x){x.classList.remove('active');});
+    t.classList.add('active');
+    document.getElementById('tab-'+t.dataset.tab).classList.add('active');
+  });
+});
+
+function grade(g){
+  var s=cl(g).toUpperCase();
+  if(s.indexOf('HOT')>=0)return'hot';
+  if(s.indexOf('WARM')>=0)return'warm';
+  if(s.indexOf('COOL')>=0)return'cool';
+  return'cold';
+}
+
+// DASHBOARD
+function buildDash(){
+  var ls=ALL,tot=ls.length;
+  var hot=0,warm=0,cool=0,cold=0;
+  ls.forEach(function(l){var g=grade(l.lead_grade);if(g==='hot')hot++;else if(g==='warm')warm++;else if(g==='cool')cool++;else cold++;});
+  var contact=ls.filter(function(l){return!isNil(l.email)||!isNil(l.phone);}).length;
+  var scores=ls.map(function(l){return parseFloat(l.lead_score)||0;}).filter(function(s){return s>0;});
+  var avg=scores.length?Math.round(scores.reduce(function(a,b){return a+b;},0)/scores.length):0;
+  document.getElementById('kpi-total').textContent=tot;
+  document.getElementById('kpi-hot').textContent=hot;
+  document.getElementById('kpi-contact').textContent=contact;
+  document.getElementById('kpi-avg').textContent=avg;
+
+  if(CHARTS.g)CHARTS.g.destroy();
+  CHARTS.g=new Chart(document.getElementById('chart-grades').getContext('2d'),{
+    type:'doughnut',
+    data:{labels:['HOT','WARM','COOL','COLD'],datasets:[{data:[hot,warm,cool,cold],backgroundColor:['rgba(255,61,90,.85)','rgba(255,140,66,.85)','rgba(59,130,246,.85)','rgba(100,116,139,.6)'],borderColor:'#0d1117',borderWidth:2,hoverOffset:6}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{position:'right',labels:{color:'#8899b0',font:{size:11},padding:10}},tooltip:{backgroundColor:'#131924',borderColor:'#1e2d44',borderWidth:1,titleColor:'#e8edf5',bodyColor:'#8899b0'}}}
+  });
+
+  var sOrd=['Micro','Small','Medium','Large','Enterprise','Unknown'],szs={};
+  ls.forEach(function(l){var s=l.business_size||'Unknown';szs[s]=(szs[s]||0)+1;});
+  var sLbl=sOrd.filter(function(k){return szs[k];});
+  if(CHARTS.s)CHARTS.s.destroy();
+  CHARTS.s=new Chart(document.getElementById('chart-size').getContext('2d'),{
+    type:'bar',
+    data:{labels:sLbl,datasets:[{data:sLbl.map(function(k){return szs[k];}),backgroundColor:['#00d4ff','#22c55e','#fbbf24','#f97316','#ef4444','#64748b'].slice(0,sLbl.length),borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{backgroundColor:'#131924',borderColor:'#1e2d44',borderWidth:1,titleColor:'#e8edf5',bodyColor:'#8899b0'}},scales:{x:{grid:{color:'#1e2d44'},ticks:{color:'#8899b0',font:{size:10}}},y:{grid:{display:false},ticks:{color:'#8899b0',font:{size:11}}}}}
+  });
+
+  var bkts=[0,0,0,0,0];
+  scores.forEach(function(s){bkts[Math.min(4,Math.floor(s/20))]++;});
+  if(CHARTS.h)CHARTS.h.destroy();
+  CHARTS.h=new Chart(document.getElementById('chart-scores').getContext('2d'),{
+    type:'bar',
+    data:{labels:['0-20','20-40','40-60','60-80','80-100'],datasets:[{label:'Leads',data:bkts,backgroundColor:['rgba(100,116,139,.7)','rgba(59,130,246,.7)','rgba(251,191,36,.7)','rgba(255,140,66,.7)','rgba(255,61,90,.8)'],borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#131924',borderColor:'#1e2d44',borderWidth:1,titleColor:'#e8edf5',bodyColor:'#8899b0'}},scales:{x:{grid:{display:false},ticks:{color:'#8899b0',font:{size:10}}},y:{grid:{color:'#1e2d44'},ticks:{color:'#8899b0',font:{size:10}}}}}
+  });
+
+  function pct(n){return tot?Math.round(n/tot*100):0;}
+  var noWeb=ls.filter(function(l){return isNil(l.website);}).length;
+  var noEm=ls.filter(function(l){return isNil(l.email);}).length;
+  var noIG=ls.filter(function(l){return isNil(l.instagram);}).length;
+  var noFB=ls.filter(function(l){return isNil(l.facebook);}).length;
+  var gml=ls.filter(function(l){return!isNil(l.email)&&/gmail|yahoo|hotmail|outlook|rediff/i.test(l.email);}).length;
+  var prows=[{lbl:'No Website',n:noWeb,c:'var(--hot)'},{lbl:'No Email Found',n:noEm,c:'var(--warm)'},{lbl:'No Instagram',n:noIG,c:'var(--cyan)'},{lbl:'No Facebook',n:noFB,c:'var(--purple)'},{lbl:'Personal Gmail/Yahoo',n:gml,c:'var(--yellow)'}];
+  var prEl=document.getElementById('presence-rows');prEl.innerHTML='';
+  prows.forEach(function(r){
+    var p=pct(r.n);
+    var row=document.createElement('div');row.className='ir';
+    var lbl=document.createElement('span');lbl.className='lbl';lbl.textContent=r.lbl;
+    var val=document.createElement('span');val.className='val';val.textContent=r.n+' ('+p+'%)';
+    row.appendChild(lbl);row.appendChild(val);prEl.appendChild(row);
+    var bar=document.createElement('div');bar.className='pb';
+    var fill=document.createElement('div');fill.className='pf';fill.style.width=p+'%';fill.style.background=r.c;
+    bar.appendChild(fill);prEl.appendChild(bar);
+  });
+
+  var sigC={};
+  ls.forEach(function(l){
+    if(isNil(l.opportunity_signals))return;
+    cl(l.opportunity_signals).split(',').forEach(function(s){var t=s.trim();if(t)sigC[t]=(sigC[t]||0)+1;});
+  });
+  var sorted=Object.entries(sigC).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  var mx=sorted.length?sorted[0][1]:1;
+  var srEl=document.getElementById('signals-rows');srEl.innerHTML='';
+  if(sorted.length){
+    sorted.forEach(function(pair){
+      var ni=document.createElement('div');ni.className='ni';
+      var nl=document.createElement('div');nl.className='nl';
+      var s1=document.createElement('span');s1.textContent=pair[0];
+      var s2=document.createElement('span');s2.textContent=pair[1];
+      nl.appendChild(s1);nl.appendChild(s2);
+      var bar=document.createElement('div');bar.className='pb';
+      var fill=document.createElement('div');fill.className='pf';fill.style.width=Math.round(pair[1]/mx*100)+'%';fill.style.background='var(--cyan)';
+      bar.appendChild(fill);ni.appendChild(nl);ni.appendChild(bar);srEl.appendChild(ni);
+    });
+  }else{srEl.textContent='No signal data';}
+
+  var hw=(hot+warm)/tot,ep=ls.filter(function(l){return!isNil(l.email);}).length/tot;
+  var wp=ls.filter(function(l){return isNil(l.website);}).length/tot,ip=ls.filter(function(l){return isNil(l.instagram);}).length/tot;
+  var prob=Math.round(Math.min(95,Math.max(5,(hw*40+ep*25+wp*20+ip*10+(avg/100)*5)*100)));
+  var pc=prob>=65?'var(--green)':prob>=40?'var(--warm)':'var(--hot)';
+  var pl=prob>=65?'High Potential Niche':prob>=40?'Moderate Opportunity':'Challenging Niche';
+  document.getElementById('prob-pct').textContent=prob+'%';
+  document.getElementById('prob-pct').style.color=pc;
+  document.getElementById('prob-label').textContent=pl;
+  document.getElementById('prob-hint').textContent=hot+' HOT '+Math.round(ep*100)+'% reachable by email '+Math.round(wp*100)+'% need website';
+  setTimeout(function(){document.getElementById('prob-bar').style.width=prob+'%';},300);
+}
+
+// LEADS
+document.getElementById('search-in').addEventListener('input',renderLeads);
+document.getElementById('sort-sel').addEventListener('change',renderLeads);
+document.querySelectorAll('.fb').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.fb').forEach(function(x){x.classList.remove('act');});
+    b.classList.add('act');GF=b.dataset.grade;renderLeads();
+  });
+});
+
+function renderLeads(){
+  var q=document.getElementById('search-in').value.toLowerCase();
+  var sort=document.getElementById('sort-sel').value;
+  var ls=ALL.slice();
+  if(GF!=='ALL')ls=ls.filter(function(l){return grade(l.lead_grade)===GF.toLowerCase();});
+  if(q)ls=ls.filter(function(l){return[l.title,l.category,l.email,l.phone,l.address,l.website,l.instagram].join(' ').toLowerCase().indexOf(q)>=0;});
+  ls.sort(function(a,b){
+    if(sort==='score-desc')return(parseFloat(b.lead_score)||0)-(parseFloat(a.lead_score)||0);
+    if(sort==='score-asc')return(parseFloat(a.lead_score)||0)-(parseFloat(b.lead_score)||0);
+    if(sort==='name-asc')return cl(a.title).localeCompare(cl(b.title));
+    if(sort==='rating-desc')return(parseFloat(b.rating)||0)-(parseFloat(a.rating)||0);
+    if(sort==='reviews-desc')return(parseInt(b.reviews_count)||0)-(parseInt(a.reviews_count)||0);
+    return 0;
+  });
+  FIL=ls;
+  document.getElementById('lcl').textContent=ls.length+' leads';
+  var con=document.getElementById('leads-container');
+  con.innerHTML='';
+  if(!ls.length){con.innerHTML='<div class="empty-lbl">No leads match filters.</div>';return;}
+  var frag=document.createDocumentFragment();
+  ls.forEach(function(l,i){frag.appendChild(buildCard(l,i));});
+  con.appendChild(frag);
+}
+
+function mkEl(tag,cls,txt){
+  var e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(txt!=null)e.textContent=String(txt);
+  return e;
+}
+
+function buildCard(l,idx){
+  var g=grade(l.lead_grade);
+  var score=parseInt(l.lead_score)||0;
+  var phone=!isNil(l.phone)?cl(l.phone):(!isNil(l.website_phone)?cl(l.website_phone):'');
+  var hasPhone=!!phone,hasEmail=!isNil(l.email);
+  var hasWeb=!isNil(l.website)&&cl(l.website).indexOf('http')===0;
+  var sigs=isNil(l.opportunity_signals)?[]:cl(l.opportunity_signals).split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var gradeClass={'hot':'gh','warm':'gw','cool':'gc','cold':'gd'}[g]||'gd';
+  var scoreClass={'hot':'sh','warm':'sw','cool':'sc','cold':'sd'}[g]||'sd';
+
+  var card=mkEl('div','lc '+gradeClass);
+  card.id='card-'+idx;
+
+  // ROW
+  var row=mkEl('div','lr');
+  row.addEventListener('click',function(){toggleX(idx);});
+  row.appendChild(mkEl('div','ln',idx+1));
+
+  var info=mkEl('div','li');
+  var nm=mkEl('div','li-n'); nm.textContent=cl(l.title)||'—'; info.appendChild(nm);
+  var subParts=[];
+  if(!isNil(l.category))subParts.push(cl(l.category));
+  if(!isNil(l.rating))subParts.push('★'+cl(l.rating));
+  if(!isNil(l.reviews_count))subParts.push('('+cl(l.reviews_count)+' reviews)');
+  info.appendChild(mkEl('div','li-s',subParts.join(' · ')||'—'));
+  row.appendChild(info);
+
+  var ct=mkEl('div','lct');
+  var pd=mkEl('div','lct-p'); pd.textContent=hasPhone?('📞 '+phone):'No phone';
+  if(!hasPhone)pd.style.color='var(--text3)';
+  ct.appendChild(pd);
+  var ed=mkEl('div',hasEmail?'lct-e has-e':'lct-e no-e');
+  ed.textContent=hasEmail?('✉ '+cl(l.email)):'No email';
+  ct.appendChild(ed);
+  row.appendChild(ct);
+
+  // Social icons
+  var ic=mkEl('div','lic');
+  var socials=[
+    {val:hasWeb?cl(l.website):'',icon:'🌐'},
+    {val:!isNil(l.instagram)?cl(l.instagram):'',icon:'📸'},
+    {val:!isNil(l.facebook)?cl(l.facebook):'',icon:'👍'},
+    {val:!isNil(l.twitter)?cl(l.twitter):'',icon:'🐦'},
+    {val:!isNil(l.linkedin)?cl(l.linkedin):'',icon:'💼'},
+  ];
+  socials.forEach(function(s){
+    if(s.val&&s.val.indexOf('http')===0){
+      var a=mkEl('a','si on'); a.textContent=s.icon; a.href=s.val; a.target='_blank';
+      a.addEventListener('click',function(e){e.stopPropagation();});
+      ic.appendChild(a);
+    }else{
+      var sp=mkEl('span','si off'); sp.textContent=s.icon; ic.appendChild(sp);
+    }
+  });
+  row.appendChild(ic);
+
+  // Score badge
+  var sb=mkEl('div','lsb '+scoreClass);
+  sb.appendChild(mkEl('span','sn',score));
+  sb.appendChild(mkEl('span','sg',g.toUpperCase()));
+  row.appendChild(sb);
+
+  // Actions
+  var ac=mkEl('div','la');
+  if(hasEmail){
+    var mb=mkEl('div','ab ml'); mb.textContent='✉';
+    var mt=mkEl('span','tt','Outreach Email'); mb.appendChild(mt);
+    mb.addEventListener('click',function(e){e.stopPropagation();openModal(idx);});
+    ac.appendChild(mb);
+    var cb=mkEl('div','ab'); cb.textContent='📋';
+    var ct2=mkEl('span','tt','Copy Email'); cb.appendChild(ct2);
+    (function(em){cb.addEventListener('click',function(e){e.stopPropagation();cp(em,'Email copied!');});})(cl(l.email));
+    ac.appendChild(cb);
+  }
+  if(hasPhone){
+    var pb=mkEl('div','ab'); pb.textContent='📞';
+    var pt=mkEl('span','tt','Copy Phone'); pb.appendChild(pt);
+    (function(ph){pb.addEventListener('click',function(e){e.stopPropagation();cp(ph,'Phone copied!');});})(phone);
+    ac.appendChild(pb);
+  }
+  if(hasWeb){
+    var wb=mkEl('a','ab'); wb.textContent='🌐'; wb.href=cl(l.website); wb.target='_blank';
+    wb.appendChild(mkEl('span','tt','Website'));
+    wb.addEventListener('click',function(e){e.stopPropagation();});
+    ac.appendChild(wb);
+  }
+  if(!isNil(l.maps_url)&&cl(l.maps_url).indexOf('http')===0){
+    var mpb=mkEl('a','ab'); mpb.textContent='📍'; mpb.href=cl(l.maps_url); mpb.target='_blank';
+    mpb.appendChild(mkEl('span','tt','Google Maps'));
+    mpb.addEventListener('click',function(e){e.stopPropagation();});
+    ac.appendChild(mpb);
+  }
+  var xb=mkEl('button','xb'); xb.id='xb-'+idx; xb.textContent='▼';
+  xb.addEventListener('click',function(e){e.stopPropagation();toggleX(idx);});
+  ac.appendChild(xb);
+  row.appendChild(ac);
+  card.appendChild(row);
+
+  // EXPANDED
+  var det=mkEl('div','ld'); det.id='det-'+idx;
+  if(sigs.length){
+    var sr=mkEl('div','sr');
+    sigs.forEach(function(s){var t=mkEl('span','stag');t.textContent=s;sr.appendChild(t);});
+    if(!isNil(l.business_size)){var t=mkEl('span','stag ok');t.textContent=cl(l.business_size)+' Biz';sr.appendChild(t);}
+    det.appendChild(sr);
+  }
+  var dg=mkEl('div','dg');
+  var defs=[
+    {lbl:'📍 Address',val:l.address,isLink:false},
+    {lbl:'🌐 Website',val:l.website,isLink:true},
+    {lbl:'✉ All Emails',val:l.all_emails,isLink:false},
+    {lbl:'⏰ Hours',val:l.hours,isLink:false},
+    {lbl:'📸 Instagram',val:l.instagram,isLink:true},
+    {lbl:'👍 Facebook',val:l.facebook,isLink:true},
+    {lbl:'🐦 Twitter/X',val:l.twitter,isLink:true},
+    {lbl:'💼 LinkedIn',val:l.linkedin,isLink:true},
+  ];
+  defs.forEach(function(d){
+    var df=mkEl('div','df');
+    df.appendChild(mkEl('div','dfl',d.lbl));
+    var isN=isNil(d.val),cv=cl(d.val);
+    var isLinkVal=d.isLink&&cv.indexOf('http')===0;
+    var dv=mkEl('div',isN?'dfv nv':isLinkVal?'dfv lv':'dfv');
+    if(isN){dv.textContent='nil';}
+    else if(isLinkVal){
+      var sp=mkEl('span'); sp.textContent=shorten(cv,34); sp.style.cursor='pointer';
+      (function(u){sp.addEventListener('click',function(){window.open(u,'_blank');});})(cv);
+      dv.appendChild(sp);
+      var ci=mkEl('span','ci','📋');
+      (function(u){ci.addEventListener('click',function(e){e.stopPropagation();cp(u,'Copied!');});})(cv);
+      dv.appendChild(ci);
+    }else{dv.textContent=cv;}
+    df.appendChild(dv); dg.appendChild(df);
+  });
+  det.appendChild(dg);
+
+  if(!isNil(l.score_breakdown)){
+    var bb=mkEl('div','bb');
+    bb.appendChild(mkEl('div','bbl','Score Breakdown'));
+    var bbt=mkEl('div','bbt');
+    cl(l.score_breakdown).split('|').forEach(function(part,i){
+      if(i>0)bbt.appendChild(document.createElement('br'));
+      bbt.appendChild(document.createTextNode(part.trim()));
+    });
+    bb.appendChild(bbt); det.appendChild(bb);
+  }
+
+  var das=mkEl('div','das');
+  if(hasEmail){
+    var b1=mkEl('button','da pr','✉ Outreach Email');
+    b1.addEventListener('click',function(){openModal(idx);});
+    das.appendChild(b1);
+    var b2=mkEl('button','da','📋 Copy Email');
+    (function(em){b2.addEventListener('click',function(){cp(em,'Email copied!');});})(cl(l.email));
+    das.appendChild(b2);
+  }
+  if(hasPhone){
+    var b3=mkEl('button','da','📞 Copy Phone');
+    (function(ph){b3.addEventListener('click',function(){cp(ph,'Phone copied!');});})(phone);
+    das.appendChild(b3);
+  }
+  if(hasWeb){
+    var b4=mkEl('button','da','🔗 Copy Website');
+    (function(u){b4.addEventListener('click',function(){cp(u,'URL copied!');});})(cl(l.website));
+    das.appendChild(b4);
+  }
+  if(!isNil(l.maps_url)&&cl(l.maps_url).indexOf('http')===0){
+    var a2=mkEl('a','da','📍 Open Maps'); a2.href=cl(l.maps_url); a2.target='_blank';
+    das.appendChild(a2);
+  }
+  det.appendChild(das);
+  card.appendChild(det);
+  return card;
+}
+
+function toggleX(idx){
+  var det=document.getElementById('det-'+idx),xb=document.getElementById('xb-'+idx);
+  if(!det)return;
+  var open=det.classList.contains('open');
+  det.classList.toggle('open',!open);
+  if(xb)xb.classList.toggle('open',!open);
+}
+
+function shorten(s,n){var r=s.replace(/^https?:\/\/(www\.)?/,'');return r.length>n?r.slice(0,n)+'...':r;}
+
+// MODAL
+function openModal(idx){
+  var l=FIL[idx];if(!l)return;
+  var g=grade(l.lead_grade),score=parseInt(l.lead_score)||0;
+  var email=isNil(l.email)?'':cl(l.email);
+  var colors={hot:'var(--hot)',warm:'var(--warm)',cool:'var(--cool)',cold:'var(--cold)'};
+  var biz=document.getElementById('m-biz'); biz.innerHTML='';
+  var inf=mkEl('div');
+  var nm=mkEl('div','mbn'); nm.textContent=cl(l.title); inf.appendChild(nm);
+  var sb=mkEl('div','mbs'); sb.textContent=(isNil(l.category)?'—':cl(l.category)); inf.appendChild(sb);
+  var sc=mkEl('div','mbsc');
+  var sn=mkEl('div','mbsn'); sn.textContent=score; sn.style.color=colors[g]||'var(--text)';
+  var sl=mkEl('div','mbsl'); sl.textContent='/100';
+  sc.appendChild(sn);sc.appendChild(sl);
+  biz.appendChild(inf);biz.appendChild(sc);
+  document.getElementById('m-to').textContent=email||'(no email — use phone)';
+  document.getElementById('m-body').value=buildEmail(l);
+  var btn=document.getElementById('m-copy');
+  btn.textContent='📋 Copy Email to Clipboard';btn.classList.remove('done');
+  document.getElementById('email-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('email-modal').classList.remove('open');}
+document.getElementById('email-modal').addEventListener('click',function(e){if(e.target===e.currentTarget)closeModal();});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
+function buildEmail(l){
+  var biz=cl(l.title)||'your business';
+  var sigs=isNil(l.opportunity_signals)?'':cl(l.opportunity_signals).toLowerCase();
+  var obs='';
+  if(sigs.indexOf('no website')>=0)obs=biz+" doesn't have a website yet — which means anyone searching for you online can't find you or contact you directly";
+  else if(sigs.indexOf('diy')>=0||sigs.indexOf('wix')>=0||sigs.indexOf('squarespace')>=0)obs='your current website is built on a DIY platform, which often limits how professional it looks and how well it converts';
+  else if(sigs.indexOf('no social media')>=0||sigs.indexOf('weak social')>=0)obs='your social media presence is minimal — you\'re missing out on a huge organic discovery channel';
+  else if(sigs.indexOf('personal email')>=0||sigs.indexOf('gmail')>=0)obs='you\'re using a personal Gmail for business — which quietly reduces trust with potential customers';
+  else if(sigs.indexOf('low rating')>=0||sigs.indexOf('reputation')>=0)obs='your Google reviews show room to grow, and reputation management can make a real difference';
+  else obs='your digital presence has areas that aren\'t fully optimised — there\'s a gap between how good '+biz+' is and how it appears online';
+  return 'Hi there,\n\nI was checking out '+biz+' earlier — and this isn\'t a random pitch.\n\nThere\'s something interesting about what you\'ve built. It\'s already working. But at the same time, it feels like it\'s not being pushed as far as it could go online.\n\nI noticed '+obs+'.\n\nUsually, when we see that, it means there\'s a gap between how good the business actually is and how it\'s being presented digitally — and that gap costs attention, and eventually customers.\n\nThat\'s exactly the space we work in at Zency Studios.\n\nWe don\'t come in with generic "marketing packages." We look at what\'s already there, figure out what\'s underperforming, and rebuild it so it actually converts.\n\nYou can take a look here: https://zencystudios.in\n\nI\'m not here to sell you anything blindly — but I\'m confident there\'s room for '+biz+' to do better, and I\'d be happy to show you how.\n\nIf you\'re open, I can share a couple of specific ideas based on what I saw.\n\n— Praneet\nZency Studios\nworkwithzency@gmail.com';
+}
+
+function copyEmail(){
+  var body=document.getElementById('m-body').value;
+  var btn=document.getElementById('m-copy');
+  navigator.clipboard.writeText(body).then(function(){
+    btn.textContent='✅ Copied!';btn.classList.add('done');toast('✅ Email copied!');
+    setTimeout(function(){btn.textContent='📋 Copy Email to Clipboard';btn.classList.remove('done');},2500);
+  }).catch(function(){
+    document.getElementById('m-body').select();document.execCommand('copy');toast('✅ Email copied!');
+  });
+}
+
+function cp(text,msg){
+  navigator.clipboard.writeText(text).then(function(){toast('✅ '+(msg||'Copied!'));}).catch(function(){toast('✅ '+(msg||'Copied!'));});
+}
+
+function toast(msg,ms){
+  ms=ms||2200;var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},ms);
+}
+</script>
+</body>
+</html>
