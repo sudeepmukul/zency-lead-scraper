@@ -1,6 +1,8 @@
 Hi this is a Lead Scraper lol.
 So How will u use it?
 Simple ra!
+dev update:
+Converting this into a Agentic CRM Soon!
 
 Clone this repo first.
 Then download the dependancies.
